@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>RepSync</title>
+
+    <!-- iOS "Add to Home Screen" support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RepSync">
+    <meta name="theme-color" content="#121418">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        :root {
+            --bg-color: #121418;
+            --card-bg: #1a1e24;
+            --card-border: #2a303c;
+            --text-primary: #f0f2f5;
+            --text-secondary: #9aa0a6;
+            --accent-red: #d9534f;
+            --accent-blue: #337ab7;
+            --accent-yellow: #f0ad4e;
+            --accent-green: #5cb85c;
+            --input-bg: #222730;
+            --input-border: #363d4a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(30px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+            display: flex;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+        }
+
+        .header-sub {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 0 0 8px 0;
+            color: #ffffff;
+        }
+
+        .desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        /* Program pill */
+        .program-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 9px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .program-pill:active { background: var(--card-border); }
+        .program-pill .chev { color: var(--text-secondary); font-size: 11px; font-weight: 400; }
+
+        /* Plates navigation bar */
+        .plates-nav {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            scrollbar-width: thin;
+        }
+
+        .plate {
+            min-width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.15s, border-color 0.15s;
+            background-color: #2a303c;
+            color: #fff;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .plate:hover {
+            transform: scale(1.08);
+        }
+
+        .plate.active {
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .plate-label {
+            font-size: 9px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .plate.red { background-color: #a93226; }
+        .plate.blue { background-color: #2471a3; }
+        .plate.yellow { background-color: #b7950b; color: #000; }
+        .plate.green { background-color: #1e8449; }
+        .plate.white { background-color: #d5d8dc; color: #000; }
+        .plate.rest { background-color: #34495e; color: #95a5a6; border: 2px dashed #7f8c8d; }
+
+        /* Date picker & controls bar */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .controls-bar input[type="date"] {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .nav-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .nav-btn:hover { background: var(--card-border); }
+
+        /* Workout Title section */
+        .split-title-box {
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .split-name {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+
+        .split-details {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Exercise Card */
+        .exercise-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .exercise-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .exercise-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .exercise-target {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--input-bg);
+            padding: 3px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .exercise-target:active { border-color: var(--input-border); }
+
+        .table-headers {
+            display: grid;
+            grid-template-columns: 50px 1fr 1fr;
+            gap: 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+
+        .set-row {
+            display: grid;
+            grid-template-columns: 50px 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .set-number {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group input {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            color: #fff;
+            padding: 10px 30px 10px 12px;
+            font-size: 16px; /* 16px+ prevents iOS Safari auto-zoom on focus */
+            text-align: right;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .input-group span {
+            position: absolute;
+            right: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+
+        .rest-day-notice {
+            background-color: var(--card-bg);
+            border: 1px dashed var(--card-border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .rest-day-notice h2 {
+            color: var(--accent-yellow);
+            margin-bottom: 8px;
+        }
+
+        .dashed-btn {
+            width: 100%;
+            background: transparent;
+            border: 2px dashed var(--input-border);
+            color: var(--text-secondary);
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        .dashed-btn:active { background: var(--card-bg); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px 16px 0 0;
+            width: 100%;
+            max-width: 650px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            box-sizing: border-box;
+        }
+        @media (min-width: 700px) {
+            .modal-overlay { align-items: center; }
+            .modal-box { border-radius: 16px; }
+        }
+        .modal-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-title { font-size: 18px; font-weight: 700; color: #fff; }
+        .modal-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: -12px; margin-bottom: 16px; }
+        .modal-close-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .list-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            gap: 10px;
+        }
+        .list-row.active-row { border-color: var(--accent-blue); }
+        .list-row-main { flex: 1; min-width: 0; }
+        .list-row-name { font-weight: 600; color: #fff; font-size: 14px; }
+        .list-row-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .list-row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+        .icon-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--input-border);
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 0;
+        }
+        .icon-btn.danger { color: var(--accent-red); border-color: var(--accent-red); }
+
+        .full-btn {
+            width: 100%;
+            background: var(--accent-blue);
+            border: none;
+            color: #fff;
+            padding: 13px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .chip {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-secondary);
+            padding: 7px 13px;
+            border-radius: 14px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .chip.selected { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+
+        .field-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin: 14px 0 6px;
+        }
+        .text-field, .select-field {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: #fff;
+            padding: 11px 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+        .field-row { display: flex; gap: 10px; }
+        .field-row > div { flex: 1; }
+
+        .schedule-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .schedule-row-num {
+            width: 54px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .schedule-row.is-today {
+            background: rgba(51,122,183,0.15);
+            border-radius: 8px;
+            padding: 5px 6px;
+            margin-left: -6px;
+            margin-right: -6px;
+        }
+
+        .empty-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 16px 0;
+        }
+
+        /* Rest timer */
+        .rest-timer-bar {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: max(12px, env(safe-area-inset-bottom));
+            max-width: 626px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 14px 16px 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .rest-timer-bar.hidden { display: none; }
+        .rest-timer-display {
+            font-size: 36px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 1px;
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
+        .rest-timer-display.finished { color: var(--accent-green); animation: restPulse 0.6s ease infinite; }
+        @keyframes restPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        .rest-timer-presets { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+        .rest-chip {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-secondary);
+            padding: 6px 13px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .rest-chip.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+        .rest-timer-controls { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .rest-ctrl-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: #fff;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .rest-ctrl-btn.play {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            width: 56px;
+            height: 56px;
+            font-size: 20px;
+        }
+        .rest-ctrl-btn.close {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            width: 26px;
+            height: 26px;
+            font-size: 14px;
+        }
+
+        /* Splash / intro screen */
+        #splashScreen {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            background: radial-gradient(circle at 50% 40%, #1b1e24 0%, #0c0d10 75%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: splashFadeOut 0.6s ease 2.1s forwards;
+        }
+        #splashScreen.hidden { display: none; }
+        .splash-badge {
+            position: relative;
+            width: 108px;
+            height: 108px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.6);
+            animation: splashPop 0.7s cubic-bezier(.2,1.4,.4,1) 0.15s forwards;
+            border-radius: 50%;
+            box-shadow: 0 0 28px rgba(232,117,44,0.45);
+        }
+        .splash-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid #c9a24b;
+            box-shadow: 0 0 24px rgba(201,162,75,0.35);
+        }
+        .splash-mono {
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #f4ede0;
+        }
+        .splash-title {
+            margin-top: 22px;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: #fff;
+            opacity: 0;
+            animation: splashFadeUp 0.6s ease 0.55s forwards;
+        }
+        .splash-tag {
+            margin-top: 8px;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            opacity: 0;
+            animation: splashFadeUp 0.6s ease 0.8s forwards;
+        }
+        @keyframes splashPop {
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes splashFadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes splashFadeOut {
+            to { opacity: 0; visibility: hidden; pointer-events: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="splashScreen" onclick="dismissSplash()">
+    <div class="splash-badge">
+        <img src="icon.png" alt="RepSync" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+    </div>
+    <div class="splash-title">REPSYNC</div>
+    <div class="splash-tag">Track. Schedule. Compare.</div>
+</div>
+
+<div class="container">
+    <div class="header-sub">Custom Training Programs</div>
+    <h1>RepSync</h1>
+    <div class="desc">Select any date through Dec 2027 — weight and reps save automatically as you type. Tap the program pill to switch or manage programs.</div>
+
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+        <div class="program-pill" style="margin-bottom:0;" onclick="openProgramManager()">
+            <span id="programPillLabel">Program 1</span>
+            <span class="chev">▾</span>
+        </div>
+        <button class="icon-btn" id="cloudIcon" onclick="openCloudModal()" title="Cloud sync">☁️</button>
+        <button class="icon-btn" onclick="openProfileModal()" title="Profile">👤</button>
+        <button class="icon-btn" onclick="openReportsModal()" title="Reports">📊</button>
+        <button class="icon-btn" onclick="toggleRestTimerBar()" title="Rest timer">⏱</button>
+        <button class="nav-btn" onclick="jumpToToday()" title="Jump to today">Today</button>
+    </div>
+
+    <div class="controls-bar">
+        <button class="nav-btn" onclick="changeDay(-1)">← Prev Day</button>
+        <input type="date" id="datePicker" min="2026-08-28" max="2027-12-31" onchange="selectDate(this.value)">
+        <button class="nav-btn" onclick="changeDay(1)">Next Day →</button>
+    </div>
+
+    <!-- Quick plate selector for surrounding days -->
+    <div class="plates-nav" id="platesNav"></div>
+
+    <div id="workoutContainer"></div>
+</div>
+
+<div class="rest-timer-bar hidden" id="restTimerBar">
+    <button class="rest-ctrl-btn close" onclick="closeRestTimer()" title="Close">✕</button>
+    <div class="rest-timer-display" id="restTimerDisplay">01:30</div>
+    <div class="rest-timer-presets" id="restTimerPresets">
+        <div class="rest-chip" data-sec="30" onclick="setRestDuration(30)">30s</div>
+        <div class="rest-chip" data-sec="60" onclick="setRestDuration(60)">60s</div>
+        <div class="rest-chip active" data-sec="90" onclick="setRestDuration(90)">90s</div>
+        <div class="rest-chip" data-sec="120" onclick="setRestDuration(120)">2m</div>
+        <div class="rest-chip" data-sec="180" onclick="setRestDuration(180)">3m</div>
+    </div>
+    <div class="rest-timer-controls">
+        <button class="rest-ctrl-btn" onclick="adjustRestTimer(-15)" title="-15s">−15</button>
+        <button class="rest-ctrl-btn play" id="restTimerPlayBtn" onclick="toggleRestTimerRun()" title="Start/Pause">▶</button>
+        <button class="rest-ctrl-btn" onclick="adjustRestTimer(15)" title="+15s">+15</button>
+        <button class="rest-ctrl-btn" onclick="resetRestTimer()" title="Reset">↺</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box" id="modalBox"></div>
+</div>
+
+<script>
+    /* ============================= CONSTANTS ============================= */
+    const EPOCH = new Date(2026, 7, 28); // Aug 28, 2026 — reference point all cycles align to
+    const DATE_MIN = "2026-08-28";
+    const DATE_MAX = "2027-12-31";
+    const MUSCLE_GROUPS = ["Quads","Hamstrings","Glutes","Calves","Chest","Back","Shoulders","Biceps","Triceps","Core"];
+
+    const K = {
+        programs: 'wt_programs_v2',
+        active: 'wt_active_program_v2',
+        migrated: 'wt_migrated_v2',
+        profile: 'wt_profile_v2'
+    };
+
+    /* ============================= EXERCISE LIBRARY (for swap/add pickers) ============================= */
+    const LIBRARY = [
+        { name: "Back Squat", muscleGroups: ["Quads","Glutes"], sets: 4, reps: "6 to 8" },
+        { name: "Front Squat", muscleGroups: ["Quads","Glutes"], sets: 4, reps: "6 to 8" },
+        { name: "Leg Press", muscleGroups: ["Quads","Glutes"], sets: 3, reps: "10 to 12" },
+        { name: "Leg Extension", muscleGroups: ["Quads"], sets: 3, reps: "12 to 15" },
+        { name: "Bulgarian Split Squat", muscleGroups: ["Quads","Glutes"], sets: 3, reps: "10" },
+        { name: "Walking Lunge", muscleGroups: ["Quads","Glutes"], sets: 3, reps: "10 to 12 per leg" },
+        { name: "Goblet Squat", muscleGroups: ["Quads","Glutes"], sets: 3, reps: "10 to 12" },
+        { name: "Hack Squat", muscleGroups: ["Quads","Glutes"], sets: 3, reps: "10 to 12" },
+
+        { name: "Romanian Deadlift", muscleGroups: ["Hamstrings","Glutes"], sets: 3, reps: "8 to 10" },
+        { name: "Leg Curl", muscleGroups: ["Hamstrings"], sets: 3, reps: "12 to 15" },
+        { name: "Deadlift", muscleGroups: ["Hamstrings","Back","Glutes"], sets: 4, reps: "5 to 6" },
+        { name: "Good Morning", muscleGroups: ["Hamstrings","Glutes"], sets: 3, reps: "8 to 10" },
+        { name: "Nordic Curl", muscleGroups: ["Hamstrings"], sets: 3, reps: "6 to 10" },
+        { name: "Single-Leg RDL", muscleGroups: ["Hamstrings","Glutes"], sets: 3, reps: "8 to 10 per leg" },
+
+        { name: "Hip Thrust", muscleGroups: ["Glutes","Hamstrings"], sets: 3, reps: "10 to 12" },
+        { name: "Glute Bridge", muscleGroups: ["Glutes"], sets: 3, reps: "12 to 15" },
+        { name: "Cable Kickback", muscleGroups: ["Glutes"], sets: 3, reps: "12 to 15" },
+        { name: "Sumo Deadlift", muscleGroups: ["Glutes","Hamstrings","Back"], sets: 4, reps: "5 to 6" },
+
+        { name: "Standing Calf Raise", muscleGroups: ["Calves"], sets: 4, reps: "15 to 20" },
+        { name: "Seated Calf Raise", muscleGroups: ["Calves"], sets: 4, reps: "15 to 20" },
+        { name: "Donkey Calf Raise", muscleGroups: ["Calves"], sets: 3, reps: "15 to 20" },
+
+        { name: "Dumbbell Bench Press", muscleGroups: ["Chest","Triceps"], sets: 4, reps: "6 to 8" },
+        { name: "Incline Dumbbell Press", muscleGroups: ["Chest","Shoulders"], sets: 3, reps: "8 to 10" },
+        { name: "Barbell Bench Press", muscleGroups: ["Chest","Triceps"], sets: 4, reps: "6 to 8" },
+        { name: "Cable Fly", muscleGroups: ["Chest"], sets: 3, reps: "12 to 15" },
+        { name: "Push-Up", muscleGroups: ["Chest","Triceps"], sets: 3, reps: "12 to 20" },
+        { name: "Dips", muscleGroups: ["Chest","Triceps"], sets: 3, reps: "8 to 12" },
+
+        { name: "Weighted Pull-Up", muscleGroups: ["Back","Biceps"], sets: 4, reps: "6 to 8" },
+        { name: "Lat Pulldown", muscleGroups: ["Back","Biceps"], sets: 3, reps: "10 to 12" },
+        { name: "Chest-Supported Row", muscleGroups: ["Back"], sets: 3, reps: "10 to 12" },
+        { name: "Barbell Row", muscleGroups: ["Back","Biceps"], sets: 3, reps: "8 to 10" },
+        { name: "Seated Cable Row", muscleGroups: ["Back","Biceps"], sets: 3, reps: "10 to 12" },
+        { name: "Face Pull", muscleGroups: ["Back","Shoulders"], sets: 3, reps: "15" },
+
+        { name: "Seated DB Shoulder Press", muscleGroups: ["Shoulders","Triceps"], sets: 3, reps: "8 to 10" },
+        { name: "Seated Overhead Press", muscleGroups: ["Shoulders","Triceps"], sets: 3, reps: "6 to 8" },
+        { name: "Lateral Raise", muscleGroups: ["Shoulders"], sets: 3, reps: "12 to 15" },
+        { name: "Arnold Press", muscleGroups: ["Shoulders","Triceps"], sets: 3, reps: "8 to 10" },
+        { name: "Cable Lateral Raise", muscleGroups: ["Shoulders"], sets: 3, reps: "12 to 15" },
+
+        { name: "EZ-Bar Curl", muscleGroups: ["Biceps"], sets: 3, reps: "10 to 12" },
+        { name: "Barbell Curl", muscleGroups: ["Biceps"], sets: 3, reps: "10 to 12" },
+        { name: "Hammer Curl", muscleGroups: ["Biceps"], sets: 3, reps: "10 to 12" },
+        { name: "Incline Dumbbell Curl", muscleGroups: ["Biceps"], sets: 3, reps: "10 to 12" },
+        { name: "Cable Curl", muscleGroups: ["Biceps"], sets: 3, reps: "12 to 15" },
+
+        { name: "Skull Crusher", muscleGroups: ["Triceps"], sets: 3, reps: "10 to 12" },
+        { name: "Cable Triceps Pushdown", muscleGroups: ["Triceps"], sets: 3, reps: "10 to 12" },
+        { name: "Overhead Triceps Extension", muscleGroups: ["Triceps"], sets: 3, reps: "10 to 12" },
+        { name: "Close-Grip Bench Press", muscleGroups: ["Triceps","Chest"], sets: 3, reps: "8 to 10" },
+
+        { name: "Hanging Leg Raise", muscleGroups: ["Core"], sets: 3, reps: "12 to 15" },
+        { name: "Plank", muscleGroups: ["Core"], sets: 3, reps: "45 to 60 sec" },
+        { name: "Cable Crunch", muscleGroups: ["Core"], sets: 3, reps: "12 to 15" },
+        { name: "Ab Wheel Rollout", muscleGroups: ["Core"], sets: 3, reps: "8 to 12" },
+        { name: "Russian Twist", muscleGroups: ["Core"], sets: 3, reps: "15 to 20 per side" }
+    ];
+
+    /* ============================= FORM TIPS (for the "Watch Form" guide) ============================= */
+    const EXERCISE_TIPS = {
+        "Back Squat": ["Keep your chest up and core braced throughout", "Push your knees out in line with your toes", "Drive through your whole foot, not just your heels"],
+        "Front Squat": ["Keep elbows high to hold the bar in the front rack", "Stay more upright than a back squat", "Brace your core hard before descending"],
+        "Leg Press": ["Keep your lower back flat against the pad", "Don't let your knees cave inward", "Avoid locking your knees out fully at the top"],
+        "Leg Extension": ["Control the weight on the way down, don't let it drop", "Avoid swinging or using momentum", "Point toes slightly to target different parts of the quad"],
+        "Bulgarian Split Squat": ["Keep most of your weight on the front leg", "Lower straight down, not forward", "Keep your torso upright for more quad emphasis"],
+        "Walking Lunge": ["Take a step long enough that your front knee stays over your ankle", "Keep your torso tall", "Push through the front heel to stand"],
+        "Goblet Squat": ["Hold the weight close to your chest", "Keep elbows inside your knees at the bottom", "Sit back like you're reaching for a chair"],
+        "Hack Squat": ["Keep your back flat against the pad", "Feet slightly forward on the platform to protect your knees", "Control the descent, don't bounce at the bottom"],
+        "Romanian Deadlift": ["Keep a slight bend in the knees throughout", "Hinge at the hips, push them back", "Keep the bar close to your legs the whole way down"],
+        "Leg Curl": ["Avoid lifting your hips off the pad", "Squeeze at the top of the movement", "Control the weight back down slowly"],
+        "Deadlift": ["Keep the bar close to your shins and body", "Brace your core before you pull", "Drive through the floor with your legs, keep your back flat"],
+        "Good Morning": ["Use light weight until your hip hinge is solid", "Keep a soft bend in the knees", "Push your hips back, not down"],
+        "Nordic Curl": ["Have a partner or anchor hold your ankles", "Lower yourself as slowly as you can control", "Use your hands to catch yourself at the bottom if needed"],
+        "Single-Leg RDL": ["Keep your hips square to the floor", "Use a wall or light support if balance is tough", "Reach the working-side hand toward the floor for control"],
+        "Hip Thrust": ["Drive through your heels", "Squeeze your glutes hard at the top", "Keep your chin tucked, don't overextend your neck"],
+        "Glute Bridge": ["Push through your heels", "Squeeze glutes at the top, avoid arching your lower back", "Keep knees tracking in line with your feet"],
+        "Cable Kickback": ["Keep a slight bend in the knee of the working leg", "Avoid arching your back to kick higher", "Focus on squeezing the glute, not swinging the leg"],
+        "Sumo Deadlift": ["Take a wide stance, toes pointed slightly out", "Keep your chest up and back flat", "Push your knees out in line with your toes as you pull"],
+        "Standing Calf Raise": ["Get a full stretch at the bottom", "Pause and squeeze at the top", "Control the tempo, don't bounce"],
+        "Seated Calf Raise": ["Keep knees bent throughout to target the soleus", "Full range of motion, top to bottom", "Avoid bouncing out of the stretch"],
+        "Donkey Calf Raise": ["Keep your torso still and hips level", "Full stretch at the bottom, full contraction at the top", "Control the movement, don't rush it"],
+        "Dumbbell Bench Press": ["Keep your shoulder blades pulled back and down", "Lower the dumbbells to chest level with control", "Press up and slightly in, not straight up"],
+        "Incline Dumbbell Press": ["Set the bench to a moderate incline (30–45°)", "Keep wrists stacked over elbows", "Don't flare elbows out to 90 degrees"],
+        "Barbell Bench Press": ["Keep your feet flat and drive them into the floor", "Retract your shoulder blades before unracking", "Lower the bar to mid-chest with control"],
+        "Cable Fly": ["Keep a slight bend in your elbows throughout", "Focus on squeezing your chest at the center", "Don't let the weight pull your shoulders forward"],
+        "Push-Up": ["Keep your body in a straight line from head to heels", "Lower until your chest nearly touches the floor", "Keep elbows at roughly a 45° angle to your body"],
+        "Dips": ["Lean slightly forward to emphasize chest over triceps", "Don't drop deeper than a comfortable shoulder stretch", "Keep shoulders down, away from your ears"],
+        "Weighted Pull-Up": ["Start from a full hang with arms extended", "Pull your chest toward the bar, not just your chin", "Control the descent instead of dropping"],
+        "Lat Pulldown": ["Pull the bar to your upper chest, not behind your neck", "Lead with your elbows, not your hands", "Avoid leaning back excessively"],
+        "Chest-Supported Row": ["Keep your chest pinned to the pad", "Pull your elbows back, squeezing your shoulder blades", "Avoid using momentum to swing the weight"],
+        "Barbell Row": ["Keep your back flat, hinge from the hips", "Pull the bar toward your lower ribs", "Avoid jerking the weight with your lower back"],
+        "Seated Cable Row": ["Keep your torso upright, avoid excessive leaning", "Pull your elbows back past your ribs", "Squeeze your shoulder blades together at the finish"],
+        "Face Pull": ["Pull toward your face, elbows high", "Focus on rotating your shoulders back", "Use light weight and prioritize the squeeze"],
+        "Seated DB Shoulder Press": ["Keep your core braced to protect your lower back", "Press the dumbbells up and slightly in", "Avoid locking out elbows hard at the top"],
+        "Seated Overhead Press": ["Keep your ribcage down, don't overarch your back", "Press the bar in a straight line overhead", "Squeeze your glutes to stay stable if standing"],
+        "Lateral Raise": ["Lead with your elbows, not your hands", "Raise to roughly shoulder height, not higher", "Use a slight bend in the elbows throughout"],
+        "Arnold Press": ["Rotate your palms from facing you to facing forward as you press", "Keep the movement smooth and controlled", "Don't rush the rotation"],
+        "Cable Lateral Raise": ["Keep constant tension by not resting at the bottom", "Lead with your elbow", "Control the weight on the way down"],
+        "EZ-Bar Curl": ["Keep your elbows pinned to your sides", "Avoid swinging your torso to lift the weight", "Squeeze at the top of the curl"],
+        "Barbell Curl": ["Keep elbows stationary at your sides", "Control the weight on the way down", "Avoid leaning back to use momentum"],
+        "Hammer Curl": ["Keep your palms facing each other throughout", "Control the descent", "Avoid swinging your shoulders"],
+        "Incline Dumbbell Curl": ["Let your arms hang straight down from the shoulder", "This stretches the bicep more, use lighter weight", "Avoid letting elbows drift forward"],
+        "Cable Curl": ["Keep constant tension throughout the movement", "Stand far enough back for full range of motion", "Avoid using your shoulders to help lift"],
+        "Skull Crusher": ["Keep your upper arms stationary, only the forearms move", "Lower the weight toward your forehead or just behind", "Use a lighter weight than you'd expect"],
+        "Cable Triceps Pushdown": ["Keep elbows pinned to your sides", "Fully extend at the bottom, squeeze", "Avoid leaning your body weight into the movement"],
+        "Overhead Triceps Extension": ["Keep your elbows pointed forward, not flared out", "Lower the weight behind your head with control", "Keep your core braced to avoid arching your back"],
+        "Close-Grip Bench Press": ["Grip just inside shoulder width", "Keep elbows tucked close to your body", "Lower to your lower chest with control"],
+        "Hanging Leg Raise": ["Avoid swinging, control the movement", "Curl your pelvis up at the top for more ab activation", "Lower your legs slowly rather than letting them drop"],
+        "Plank": ["Keep your body in a straight line, don't let hips sag", "Squeeze your glutes and brace your core", "Breathe steadily, don't hold your breath"],
+        "Cable Crunch": ["Round your spine as you crunch down", "Keep your hips stationary, this isn't a hip hinge", "Focus on using your abs, not pulling with your arms"],
+        "Ab Wheel Rollout": ["Start on your knees until you build strength", "Keep your core braced the entire time", "Roll out only as far as you can control the return"],
+        "Russian Twist": ["Keep your chest up, don't round your back", "Rotate from your torso, not just your arms", "Add weight only once your form is solid"]
+    };
+
+    function getYoutubeSearchUrl(name) {
+        return "https://www.youtube.com/results?search_query=" + encodeURIComponent(name + " proper form technique");
+    }
+
+    function openFormGuide(dayType, exerciseId) {
+        const program = getActiveProgram();
+        const ex = (program.dayTypes[dayType] || []).find(e => e.id === exerciseId);
+        if (!ex) return;
+        const tips = EXERCISE_TIPS[ex.name];
+        const tipsHtml = tips
+            ? `<div class="field-label" style="margin-top:0;">Form Cues</div>` + tips.map(t => `<div class="list-row" style="cursor:default;"><div class="list-row-main"><div class="list-row-sub" style="font-size:13px; color:#fff;">• ${esc(t)}</div></div></div>`).join('')
+            : `<div class="empty-hint">No saved cues for this exercise yet — check the video for form guidance.</div>`;
+
+        const history = getExerciseHistory(state.activeId, ex.id);
+        let progressHtml = '';
+        if (history.length >= 2) {
+            const change = +(history[history.length - 1].weight - history[0].weight).toFixed(1);
+            const changeStr = change > 0 ? `+${change}kg` : (change < 0 ? `${change}kg` : 'No change');
+            progressHtml = `
+                <div class="field-label" style="margin-top:0;">Progress (${history.length} sessions logged)</div>
+                ${buildProgressChartSVG(history)}
+                <div class="empty-hint" style="text-align:left;">${changeStr} since your first logged session (${history[0].date}).</div>
+            `;
+        } else if (history.length === 1) {
+            progressHtml = `<div class="field-label" style="margin-top:0;">Progress</div><div class="empty-hint">Log a couple more sessions to see a trend here.</div>`;
+        }
+
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">${esc(ex.name)}</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            ${progressHtml}
+            ${tipsHtml}
+            <button class="full-btn" style="margin-top:14px;" onclick="window.open('${getYoutubeSearchUrl(ex.name)}', '_blank')">▶ Watch Form Videos on YouTube</button>
+        `);
+    }
+
+    /* ============================= DAY TYPE TEMPLATES (ready-made splits) ============================= */
+    const DAY_TYPE_TEMPLATES = {
+        "Chest Day": ["Barbell Bench Press", "Incline Dumbbell Press", "Cable Fly", "Dips"],
+        "Back Day": ["Weighted Pull-Up", "Barbell Row", "Lat Pulldown", "Seated Cable Row", "Face Pull"],
+        "Shoulder Day": ["Seated Overhead Press", "Lateral Raise", "Arnold Press", "Cable Lateral Raise"],
+        "Arm Day": ["EZ-Bar Curl", "Hammer Curl", "Skull Crusher", "Cable Triceps Pushdown"],
+        "Chest & Back": ["Barbell Bench Press", "Incline Dumbbell Press", "Weighted Pull-Up", "Barbell Row", "Cable Fly", "Face Pull"],
+        "Shoulders & Arms": ["Seated Overhead Press", "Lateral Raise", "Arnold Press", "EZ-Bar Curl", "Skull Crusher", "Cable Triceps Pushdown"],
+        "Full Body Day": ["Back Squat", "Barbell Bench Press", "Barbell Row", "Seated Overhead Press", "Romanian Deadlift"],
+        "Core Day": ["Hanging Leg Raise", "Plank", "Cable Crunch", "Russian Twist"]
+    };
+
+    function buildExercisesFromNames(program, names) {
+        return names.map(name => {
+            const lib = LIBRARY.find(l => l.name === name);
+            const id = program.nextEntryId++;
+            if (lib) return { id, name: lib.name, muscleGroups: lib.muscleGroups.slice(), sets: lib.sets, reps: lib.reps };
+            return { id, name, muscleGroups: [], sets: 3, reps: "10 to 12" };
+        });
+    }
+
+    const NAMED_PLATE_CLASS = {
+        "Legs Day": "red", "UPPER DAY": "blue", "LOWER DAY": "yellow", "PUSH DAY": "green", "Pull Day": "white", "Rest Day": "rest"
+    };
+    const CUSTOM_PALETTE = ["#8e44ad","#16a085","#d35400","#7f8c8d","#c0392b","#27ae60","#2980b9","#e67e22","#9b59b6","#1abc9c"];
+
+    /* ============================= DEFAULT PROGRAM ============================= */
+    function buildDefaultProgram1() {
+        return {
+            id: "program1",
+            name: "Program 1",
+            nextEntryId: 30,
+            cycleTemplate: ["Legs Day","UPPER DAY","Rest Day","LOWER DAY","PUSH DAY","Rest Day","Pull Day","Legs Day","Rest Day","UPPER DAY","LOWER DAY","Rest Day","PUSH DAY","Pull Day","Rest Day"],
+            dayTypes: {
+                "Legs Day": [
+                    { id: 1, name: "Back Squat", muscleGroups: ["Quads","Glutes"], sets: 4, reps: "6 to 8" },
+                    { id: 2, name: "Romanian Deadlift", muscleGroups: ["Hamstrings","Glutes"], sets: 3, reps: "8 to 10" },
+                    { id: 3, name: "Leg Press", muscleGroups: ["Quads","Glutes"], sets: 3, reps: "10 to 12" },
+                    { id: 4, name: "Leg Extension", muscleGroups: ["Quads"], sets: 3, reps: "12 to 15" },
+                    { id: 5, name: "Leg Curl", muscleGroups: ["Hamstrings"], sets: 3, reps: "12 to 15" },
+                    { id: 6, name: "Standing Calf Raise", muscleGroups: ["Calves"], sets: 4, reps: "15 to 20" }
+                ],
+                "UPPER DAY": [
+                    { id: 7, name: "Incline Dumbbell Press", muscleGroups: ["Chest","Shoulders"], sets: 4, reps: "6 to 8" },
+                    { id: 8, name: "Weighted Pull-Up", muscleGroups: ["Back","Biceps"], sets: 4, reps: "6 to 8" },
+                    { id: 9, name: "Seated DB Shoulder Press", muscleGroups: ["Shoulders","Triceps"], sets: 3, reps: "8 to 10" },
+                    { id: 10, name: "Chest-Supported Row", muscleGroups: ["Back"], sets: 3, reps: "10 to 12" },
+                    { id: 11, name: "Face Pull", muscleGroups: ["Back","Shoulders"], sets: 3, reps: "15" },
+                    { id: 12, name: "EZ-Bar Curl", muscleGroups: ["Biceps"], sets: 3, reps: "10 to 12" },
+                    { id: 13, name: "Skull Crusher", muscleGroups: ["Triceps"], sets: 3, reps: "10 to 12" }
+                ],
+                "LOWER DAY": [
+                    { id: 14, name: "Front Squat", muscleGroups: ["Quads","Glutes"], sets: 4, reps: "6 to 8" },
+                    { id: 15, name: "Bulgarian Split Squat", muscleGroups: ["Quads","Glutes"], sets: 3, reps: "10" },
+                    { id: 16, name: "Hip Thrust", muscleGroups: ["Glutes","Hamstrings"], sets: 3, reps: "10 to 12" },
+                    { id: 17, name: "Leg Extension", muscleGroups: ["Quads"], sets: 3, reps: "12 to 15" }
+                ],
+                "PUSH DAY": [
+                    { id: 18, name: "Dumbbell Bench Press", muscleGroups: ["Chest","Triceps"], sets: 4, reps: "6 to 8" },
+                    { id: 19, name: "Incline Dumbbell Press", muscleGroups: ["Chest","Shoulders"], sets: 3, reps: "8 to 10" },
+                    { id: 20, name: "Seated Overhead Press", muscleGroups: ["Shoulders","Triceps"], sets: 3, reps: "6 to 8" },
+                    { id: 21, name: "Lateral Raise", muscleGroups: ["Shoulders"], sets: 3, reps: "12 to 15" },
+                    { id: 22, name: "Dips", muscleGroups: ["Chest","Triceps"], sets: 3, reps: "8 to 12" },
+                    { id: 23, name: "Cable Triceps Pushdown", muscleGroups: ["Triceps"], sets: 3, reps: "10 to 12" }
+                ],
+                "Pull Day": [
+                    { id: 24, name: "Deadlift", muscleGroups: ["Hamstrings","Back","Glutes"], sets: 4, reps: "5 to 6" },
+                    { id: 25, name: "Weighted Pull-Up", muscleGroups: ["Back","Biceps"], sets: 4, reps: "8 to 10" },
+                    { id: 26, name: "Barbell Row", muscleGroups: ["Back","Biceps"], sets: 3, reps: "8 to 10" },
+                    { id: 27, name: "Seated Cable Row", muscleGroups: ["Back","Biceps"], sets: 3, reps: "10 to 12" },
+                    { id: 28, name: "Barbell Curl", muscleGroups: ["Biceps"], sets: 3, reps: "10 to 12" },
+                    { id: 29, name: "Hanging Leg Raise", muscleGroups: ["Core"], sets: 3, reps: "12 to 15" }
+                ]
+            }
+        };
+    }
+
+    /* ============================= STATE ============================= */
+    let state = { programs: {}, activeId: "program1", profile: { name: "", age: "", height: "", weight: "", sex: "" } };
+    let currentDateStr = "2026-08-28";
+    let swapContext = null; // { dayType, exerciseId } while a swap/add picker is open
+    let scheduleEditContext = null; // { slotIndex } while quick day-type picker is open
+
+    function esc(str) {
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function loadState() {
+        let programs = null;
+        try { programs = JSON.parse(localStorage.getItem(K.programs) || "null"); } catch (e) { programs = null; }
+        if (!programs || Object.keys(programs).length === 0) {
+            programs = { program1: buildDefaultProgram1() };
+        }
+        let activeId = localStorage.getItem(K.active) || "program1";
+        if (!programs[activeId]) activeId = Object.keys(programs)[0];
+
+        let profile = null;
+        try { profile = JSON.parse(localStorage.getItem(K.profile) || "null"); } catch (e) { profile = null; }
+        if (!profile) profile = { name: "", age: "", height: "", weight: "", sex: "" };
+
+        return { programs, activeId, profile };
+    }
+
+    function persist() {
+        localStorage.setItem(K.programs, JSON.stringify(state.programs));
+        localStorage.setItem(K.active, state.activeId);
+        localStorage.setItem(K.profile, JSON.stringify(state.profile));
+        if (window.scheduleCloudPush) window.scheduleCloudPush();
+    }
+
+    /* ============================= CLOUD SYNC BRIDGE (called from the Firebase module below) ============================= */
+    function getCloudPayload() {
+        const logs = {};
+        const re = /^.+_\d{4}-\d{2}-\d{2}_\d+_s\d+_(weight|reps)$/;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && re.test(key)) logs[key] = localStorage.getItem(key);
+        }
+        return { programs: state.programs, activeId: state.activeId, logs: logs, profile: state.profile };
+    }
+
+    function applyCloudSnapshot(cloudPrograms, cloudActiveId, cloudLogs, cloudProfile) {
+        if (cloudPrograms && Object.keys(cloudPrograms).length > 0) {
+            state.programs = cloudPrograms;
+            state.activeId = (cloudActiveId && cloudPrograms[cloudActiveId]) ? cloudActiveId : Object.keys(cloudPrograms)[0];
+        }
+        if (cloudProfile) state.profile = cloudProfile;
+        Object.keys(cloudLogs || {}).forEach(k => localStorage.setItem(k, cloudLogs[k]));
+        localStorage.setItem(K.programs, JSON.stringify(state.programs));
+        localStorage.setItem(K.active, state.activeId);
+        localStorage.setItem(K.profile, JSON.stringify(state.profile));
+        render();
+    }
+
+    /* ============================= PROFILE ============================= */
+    function openProfileModal() {
+        const p = state.profile || {};
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">Profile</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-subtitle">Used for your strength comparison report. Everything here is optional.</div>
+            <div class="field-label">Name</div>
+            <input class="text-field" id="profName" value="${esc(p.name || '')}" style="margin-bottom:10px;">
+            <div class="field-row" style="margin-bottom:10px;">
+                <div>
+                    <div class="field-label" style="margin-top:0;">Age</div>
+                    <input class="text-field" id="profAge" type="number" inputmode="numeric" value="${esc(p.age || '')}">
+                </div>
+                <div>
+                    <div class="field-label" style="margin-top:0;">Sex</div>
+                    <select class="select-field" id="profSex">
+                        <option value="" ${!p.sex ? 'selected' : ''}>Prefer not to say</option>
+                        <option value="female" ${p.sex === 'female' ? 'selected' : ''}>Female</option>
+                        <option value="male" ${p.sex === 'male' ? 'selected' : ''}>Male</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field-row" style="margin-bottom:14px;">
+                <div>
+                    <div class="field-label" style="margin-top:0;">Height (cm)</div>
+                    <input class="text-field" id="profHeight" type="number" inputmode="numeric" value="${esc(p.height || '')}">
+                </div>
+                <div>
+                    <div class="field-label" style="margin-top:0;">Weight (kg)</div>
+                    <input class="text-field" id="profWeight" type="number" inputmode="decimal" value="${esc(p.weight || '')}">
+                </div>
+            </div>
+            <button class="full-btn" onclick="saveProfile()">Save</button>
+        `);
+    }
+
+    function saveProfile() {
+        state.profile = {
+            name: document.getElementById('profName').value.trim(),
+            age: document.getElementById('profAge').value.trim(),
+            sex: document.getElementById('profSex').value,
+            height: document.getElementById('profHeight').value.trim(),
+            weight: document.getElementById('profWeight').value.trim()
+        };
+        persist();
+        closeModal();
+    }
+
+    /* ============================= REPORTS ENGINE ============================= */
+    function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+    function scanLogsForProgram(programId) {
+        const re = new RegExp('^' + escapeRegex(programId) + '_(\\d{4}-\\d{2}-\\d{2})_(\\d+)_s(\\d+)_(weight|reps)$');
+        const entries = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            const m = key.match(re);
+            if (!m) continue;
+            const val = localStorage.getItem(key);
+            if (!val) continue;
+            entries.push({ date: m[1], exerciseId: parseInt(m[2]), setNum: parseInt(m[3]), kind: m[4], value: val });
+        }
+        return entries;
+    }
+
+    function buildExerciseIndex(program) {
+        const idx = {};
+        Object.keys(program.dayTypes).forEach(dt => {
+            program.dayTypes[dt].forEach(ex => {
+                idx[ex.id] = { name: ex.name, muscleGroups: ex.muscleGroups || [] };
+            });
+        });
+        return idx;
+    }
+
+    function getHistoricalMaxWeight(programId, exerciseId) {
+        const entries = scanLogsForProgram(programId).filter(e => e.kind === 'weight' && e.exerciseId === exerciseId);
+        if (!entries.length) return null;
+        const max = Math.max(...entries.map(e => parseFloat(e.value) || 0));
+        return max > 0 ? max : null;
+    }
+
+    function computeWorkoutStats(programId, daysBack) {
+        const entries = scanLogsForProgram(programId);
+        const cutoff = daysBack ? new Date(Date.now() - daysBack * 86400000).toISOString().split('T')[0] : null;
+        const filtered = cutoff ? entries.filter(e => e.date >= cutoff) : entries;
+
+        const setMap = new Map();
+        filtered.forEach(e => setMap.set(e.date + '|' + e.exerciseId + '|' + e.setNum, e.exerciseId));
+
+        const datesWithData = new Set(filtered.map(e => e.date));
+        const idx = buildExerciseIndex(state.programs[programId]);
+        const muscleVolume = {};
+        setMap.forEach(exerciseId => {
+            const info = idx[exerciseId];
+            const groups = (info && info.muscleGroups && info.muscleGroups.length) ? info.muscleGroups : ['Other'];
+            groups.forEach(mg => { muscleVolume[mg] = (muscleVolume[mg] || 0) + 1; });
+        });
+
+        return { totalWorkoutDays: datesWithData.size, totalSets: setMap.size, muscleVolume: muscleVolume };
+    }
+
+    function getExerciseHistory(programId, exerciseId) {
+        const entries = scanLogsForProgram(programId).filter(e => e.exerciseId === exerciseId && e.kind === 'weight');
+        const byDate = {};
+        entries.forEach(e => {
+            const w = parseFloat(e.value) || 0;
+            if (w <= 0) return;
+            byDate[e.date] = Math.max(byDate[e.date] || 0, w);
+        });
+        return Object.keys(byDate).sort().map(date => ({ date: date, weight: byDate[date] }));
+    }
+
+    function buildProgressChartSVG(history) {
+        if (history.length < 2) return '';
+        const width = 280, height = 110, padL = 34, padR = 10, padT = 14, padB = 22;
+        const weights = history.map(pt => pt.weight);
+        const minW = Math.min(...weights);
+        const maxW = Math.max(...weights);
+        const range = (maxW - minW) || 1;
+        const innerW = width - padL - padR;
+        const innerH = height - padT - padB;
+        const stepX = history.length > 1 ? innerW / (history.length - 1) : 0;
+
+        const points = history.map((pt, i) => ({
+            x: padL + i * stepX,
+            y: padT + (1 - (pt.weight - minW) / range) * innerH
+        }));
+
+        const pathD = points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+        const dots = points.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#337ab7"/>`).join('');
+        const firstLabel = history[0].date.slice(5);
+        const lastLabel = history[history.length - 1].date.slice(5);
+
+        return `
+            <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; display:block; margin: 4px 0 6px;">
+                <text x="2" y="${padT + 3}" font-size="10" fill="#9aa0a6">${maxW}kg</text>
+                <text x="2" y="${height - padB + 4}" font-size="10" fill="#9aa0a6">${minW}kg</text>
+                <path d="${pathD}" fill="none" stroke="#337ab7" stroke-width="2"/>
+                ${dots}
+                <text x="${padL}" y="${height - 4}" font-size="10" fill="#9aa0a6">${firstLabel}</text>
+                <text x="${width - padR}" y="${height - 4}" font-size="10" fill="#9aa0a6" text-anchor="end">${lastLabel}</text>
+            </svg>
+        `;
+    }
+
+    // Rough, general bodyweight-ratio benchmarks: [untrained, intermediate, advanced]
+    const STRENGTH_STANDARDS = {
+        "Back Squat": { male: [0.75, 1.25, 1.75], female: [0.5, 0.75, 1.25] },
+        "Front Squat": { male: [0.6, 1.0, 1.4], female: [0.4, 0.6, 1.0] },
+        "Barbell Bench Press": { male: [0.5, 1.0, 1.5], female: [0.3, 0.5, 0.75] },
+        "Dumbbell Bench Press": { male: [0.4, 0.85, 1.3], female: [0.25, 0.45, 0.65] },
+        "Deadlift": { male: [0.75, 1.5, 2.0], female: [0.5, 1.0, 1.5] },
+        "Sumo Deadlift": { male: [0.75, 1.5, 2.0], female: [0.5, 1.0, 1.5] },
+        "Seated Overhead Press": { male: [0.35, 0.65, 0.9], female: [0.2, 0.4, 0.55] }
+    };
+
+    function getBestWeightForExerciseName(programId, exerciseName) {
+        const idx = buildExerciseIndex(state.programs[programId]);
+        const matchingIds = Object.keys(idx).filter(id => idx[id].name === exerciseName).map(Number);
+        if (!matchingIds.length) return null;
+        const entries = scanLogsForProgram(programId).filter(e => e.kind === 'weight' && matchingIds.includes(e.exerciseId));
+        if (!entries.length) return null;
+        const max = Math.max(...entries.map(e => parseFloat(e.value) || 0));
+        return max > 0 ? max : null;
+    }
+
+    function buildStrengthComparisonHtml() {
+        const p = state.profile || {};
+        const bw = parseFloat(p.weight);
+        if (!bw || !p.sex) {
+            return `<div class="empty-hint">Add your weight and sex in Profile to unlock this comparison.</div>`;
+        }
+        let rows = '';
+        Object.keys(STRENGTH_STANDARDS).forEach(liftName => {
+            const best = getBestWeightForExerciseName(state.activeId, liftName);
+            if (best === null) return;
+            const levels = STRENGTH_STANDARDS[liftName][p.sex] || STRENGTH_STANDARDS[liftName].male;
+            const ratio = best / bw;
+            let label, pct;
+            if (ratio < levels[0]) { label = 'Below average'; pct = (ratio / levels[0]) * 33; }
+            else if (ratio < levels[1]) { label = 'Average'; pct = 33 + ((ratio - levels[0]) / (levels[1] - levels[0])) * 33; }
+            else if (ratio < levels[2]) { label = 'Advanced range'; pct = 66 + ((ratio - levels[1]) / (levels[2] - levels[1])) * 34; }
+            else { label = 'Elite range'; pct = 100; }
+            pct = Math.max(4, Math.min(100, pct));
+            rows += `
+                <div style="margin-bottom:14px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                        <span style="color:#fff; font-weight:600;">${esc(liftName)}</span>
+                        <span style="color:var(--text-secondary);">${best}kg · ${label}</span>
+                    </div>
+                    <div style="background:var(--input-bg); border-radius:6px; height:10px; overflow:hidden;">
+                        <div style="background:linear-gradient(90deg,#d9534f,#f0ad4e,#5cb85c); height:100%; width:${pct}%;"></div>
+                    </div>
+                </div>
+            `;
+        });
+        if (!rows) return `<div class="empty-hint">Log a set on Back Squat, a Bench Press, Deadlift, or Overhead Press to see this.</div>`;
+        return rows + `<div class="empty-hint" style="text-align:left; padding-top:2px;">Rough general benchmarks by bodyweight ratio — not personalized, and based on your heaviest logged working weight rather than a true 1-rep max.</div>`;
+    }
+
+    function openReportsModal(periodDays) {
+        if (periodDays === undefined) periodDays = 30;
+        const stats = computeWorkoutStats(state.activeId, periodDays);
+        const maxVol = Math.max(1, ...Object.values(stats.muscleVolume));
+        const volRows = Object.keys(stats.muscleVolume)
+            .sort((a, b) => stats.muscleVolume[b] - stats.muscleVolume[a])
+            .map(mg => {
+                const pct = Math.round((stats.muscleVolume[mg] / maxVol) * 100);
+                return `
+                    <div style="margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                            <span style="color:#fff; font-weight:600;">${esc(mg)}</span>
+                            <span style="color:var(--text-secondary);">${stats.muscleVolume[mg]} sets</span>
+                        </div>
+                        <div style="background:var(--input-bg); border-radius:6px; height:8px; overflow:hidden;">
+                            <div style="background:var(--accent-blue); height:100%; width:${pct}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<div class="empty-hint">No sets logged in this period yet.</div>';
+
+        const chip = d => `class="chip ${periodDays === d ? 'selected' : ''}" onclick="openReportsModal(${d})"`;
+
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">Reports</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <div class="chip-row">
+                <div ${chip(7)}>7 Days</div>
+                <div ${chip(30)}>30 Days</div>
+                <div ${chip(90)}>90 Days</div>
+                <div ${chip(36500)}>All Time</div>
+            </div>
+            <div class="field-row" style="margin-bottom:18px;">
+                <div class="exercise-card" style="text-align:center; padding:14px;">
+                    <div style="font-size:24px; font-weight:800; color:#fff;">${stats.totalWorkoutDays}</div>
+                    <div style="font-size:11px; color:var(--text-secondary);">Workout Days</div>
+                </div>
+                <div class="exercise-card" style="text-align:center; padding:14px;">
+                    <div style="font-size:24px; font-weight:800; color:#fff;">${stats.totalSets}</div>
+                    <div style="font-size:11px; color:var(--text-secondary);">Sets Logged</div>
+                </div>
+            </div>
+            <div class="field-label" style="margin-top:0;">Muscle Volume</div>
+            ${volRows}
+            <div class="field-label">How You Compare</div>
+            ${buildStrengthComparisonHtml()}
+        `);
+    }
+
+    function migrateOldLogs() {
+        if (localStorage.getItem(K.migrated)) return;
+        const re = /^(\d{4}-\d{2}-\d{2})_(\d+)_s(\d+)_(weight|reps)$/;
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+        keys.forEach(key => {
+            if (!key) return;
+            if (re.test(key)) {
+                const newKey = "program1_" + key;
+                if (localStorage.getItem(newKey) === null) {
+                    localStorage.setItem(newKey, localStorage.getItem(key));
+                }
+            }
+        });
+        localStorage.setItem(K.migrated, "1");
+    }
+
+    function getActiveProgram() { return state.programs[state.activeId]; }
+
+    /* ============================= SCHEDULE MATH ============================= */
+    function diffDaysFromEpoch(dateStr) {
+        const d = new Date(dateStr);
+        return Math.round((d - EPOCH) / 86400000);
+    }
+
+    function getCycleIndexForDate(program, dateStr) {
+        const len = (program.cycleTemplate && program.cycleTemplate.length) || 1;
+        const diff = diffDaysFromEpoch(dateStr);
+        return ((diff % len) + len) % len;
+    }
+
+    function getDayTypeForDate(program, dateStr) {
+        const diff = diffDaysFromEpoch(dateStr);
+        if (diff < 0) return "Rest Day";
+        const idx = getCycleIndexForDate(program, dateStr);
+        return program.cycleTemplate[idx] || "Rest Day";
+    }
+
+    function getSubDetails(program, dayTypeName) {
+        if (dayTypeName === "Rest Day") return "Recovery & Growth";
+        const exs = (program.dayTypes && program.dayTypes[dayTypeName]) || [];
+        const groups = [...new Set(exs.flatMap(e => e.muscleGroups || []))];
+        return groups.length ? groups.join(" · ") : "Custom Day · Add exercises below";
+    }
+
+    function colorForDayType(name) {
+        if (NAMED_PLATE_CLASS[name]) return { cls: NAMED_PLATE_CLASS[name], style: "" };
+        let h = 0;
+        for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+        const color = CUSTOM_PALETTE[h % CUSTOM_PALETTE.length];
+        return { cls: "", style: `background-color:${color};` };
+    }
+
+    function allDayTypeNames(program) {
+        return ["Rest Day", ...Object.keys(program.dayTypes)];
+    }
+
+    /* ============================= INIT ============================= */
+    function init() {
+        migrateOldLogs();
+        state = loadState();
+        persist();
+
+        const today = new Date().toISOString().split('T')[0];
+        if (today >= DATE_MIN && today <= DATE_MAX) {
+            currentDateStr = today;
+        } else {
+            currentDateStr = DATE_MIN;
+        }
+        document.getElementById('datePicker').value = currentDateStr;
+        render();
+    }
+
+    function selectDate(dateStr) {
+        currentDateStr = dateStr;
+        render();
+    }
+
+    function jumpToToday() {
+        const today = new Date().toISOString().split('T')[0];
+        const target = (today >= DATE_MIN && today <= DATE_MAX) ? today : DATE_MIN;
+        currentDateStr = target;
+        document.getElementById('datePicker').value = target;
+        render();
+    }
+
+    function dismissSplash() {
+        const el = document.getElementById('splashScreen');
+        if (el) el.classList.add('hidden');
+    }
+
+    /* ============================= REST TIMER ============================= */
+    let restDuration = 90;
+    let restRemaining = 90;
+    let restRunning = false;
+    let restTickInterval = null;
+    let restAudioCtx = null;
+
+    function toggleRestTimerBar() {
+        const bar = document.getElementById('restTimerBar');
+        if (!bar) return;
+        bar.classList.toggle('hidden');
+        if (!bar.classList.contains('hidden')) renderRestTimer();
+    }
+
+    function closeRestTimer() {
+        pauseRestTimer();
+        document.getElementById('restTimerBar').classList.add('hidden');
+    }
+
+    function setRestDuration(sec) {
+        restDuration = sec;
+        restRemaining = sec;
+        pauseRestTimer();
+        renderRestTimer();
+    }
+
+    function adjustRestTimer(delta) {
+        restRemaining = Math.max(0, restRemaining + delta);
+        renderRestTimer();
+    }
+
+    function resetRestTimer() {
+        restRemaining = restDuration;
+        pauseRestTimer();
+        renderRestTimer();
+    }
+
+    function toggleRestTimerRun() {
+        if (restRunning) pauseRestTimer(); else startRestTimer();
+    }
+
+    function startRestTimer() {
+        if (restRemaining <= 0) restRemaining = restDuration;
+        restRunning = true;
+        primeRestAudio();
+        clearInterval(restTickInterval);
+        restTickInterval = setInterval(() => {
+            restRemaining--;
+            if (restRemaining <= 0) {
+                restRemaining = 0;
+                pauseRestTimer();
+                playRestBeep();
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+            }
+            renderRestTimer();
+        }, 1000);
+        renderRestTimer();
+    }
+
+    function pauseRestTimer() {
+        restRunning = false;
+        clearInterval(restTickInterval);
+        renderRestTimer();
+    }
+
+    function renderRestTimer() {
+        const display = document.getElementById('restTimerDisplay');
+        if (!display) return;
+        const m = Math.floor(restRemaining / 60);
+        const s = restRemaining % 60;
+        display.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        display.classList.toggle('finished', restRemaining === 0);
+        const playBtn = document.getElementById('restTimerPlayBtn');
+        if (playBtn) playBtn.textContent = restRunning ? '⏸' : '▶';
+        document.querySelectorAll('.rest-chip').forEach(c => {
+            c.classList.toggle('active', parseInt(c.dataset.sec) === restDuration);
+        });
+    }
+
+    function primeRestAudio() {
+        if (!restAudioCtx) {
+            try { restAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+        } else if (restAudioCtx.state === 'suspended') {
+            restAudioCtx.resume();
+        }
+    }
+
+    function playRestBeep() {
+        if (!restAudioCtx) return;
+        for (let i = 0; i < 3; i++) {
+            const t = restAudioCtx.currentTime + i * 0.35;
+            const osc = restAudioCtx.createOscillator();
+            const gain = restAudioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+            osc.connect(gain).connect(restAudioCtx.destination);
+            osc.start(t);
+            osc.stop(t + 0.3);
+        }
+    }
+
+    function changeDay(amount) {
+        const d = new Date(currentDateStr);
+        d.setDate(d.getDate() + amount);
+        const newStr = d.toISOString().split('T')[0];
+        if (newStr >= DATE_MIN && newStr <= DATE_MAX) {
+            currentDateStr = newStr;
+            document.getElementById('datePicker').value = currentDateStr;
+            render();
+        }
+    }
+
+    /* ============================= MAIN RENDER ============================= */
+    function render() {
+        const program = getActiveProgram();
+        document.getElementById('programPillLabel').textContent = program.name;
+
+        const dayType = getDayTypeForDate(program, currentDateStr);
+        renderPlatesNav();
+
+        const container = document.getElementById('workoutContainer');
+
+        if (dayType === "Rest Day") {
+            container.innerHTML = `
+                <div class="split-title-box">
+                    <div>
+                        <div class="split-name">REST DAY</div>
+                        <div class="split-details">${esc(getSubDetails(program, "Rest Day"))}</div>
+                    </div>
+                    <button class="icon-btn" title="Change this day" onclick="openQuickDayPicker()">✏️</button>
+                </div>
+                <div class="rest-day-notice">
+                    <h2>Take it easy today 🛌</h2>
+                    <p>No scheduled exercises. Hydrate, eat well, and let your body recover for the next cycle.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const exercises = (program.dayTypes[dayType] || []);
+
+        let html = `
+            <div class="split-title-box">
+                <div>
+                    <div class="split-name">${esc(dayType)}</div>
+                    <div class="split-details">${esc(getSubDetails(program, dayType))}</div>
+                </div>
+                <button class="icon-btn" title="Change this day" onclick="openQuickDayPicker()">✏️</button>
+            </div>
+        `;
+
+        if (exercises.length === 0) {
+            html += `<div class="empty-hint">No exercises yet on this day. Add your first one below.</div>`;
+        }
+
+        exercises.forEach(ex => {
+            const histMax = getHistoricalMaxWeight(state.activeId, ex.id);
+            html += `
+                <div class="exercise-card">
+                    <div class="exercise-header">
+                        <div class="exercise-name">${esc(ex.name)}${histMax ? ` <span style="font-size:10px; background:#c9a24b; color:#181a1f; padding:2px 7px; border-radius:6px; font-weight:700; vertical-align:middle;">🏆 ${histMax}kg</span>` : ''}</div>
+                        <div class="exercise-actions">
+                            <div class="exercise-target" title="Edit sets/reps" onclick="openEditTarget('${esc(dayType)}', ${ex.id})">${ex.sets} × ${esc(ex.reps)}</div>
+                            <button class="icon-btn" title="Watch form / tips" onclick="openFormGuide('${esc(dayType)}', ${ex.id})">▶</button>
+                            <button class="icon-btn" title="Swap exercise" onclick="openSwapPicker('${esc(dayType)}', ${ex.id})">⇄</button>
+                            <button class="icon-btn danger" title="Remove exercise" onclick="removeExercise('${esc(dayType)}', ${ex.id})">✕</button>
+                        </div>
+                    </div>
+                    <div class="table-headers">
+                        <div>Set</div>
+                        <div>Weight</div>
+                        <div>Reps</div>
+                    </div>
+            `;
+
+            for (let s = 1; s <= ex.sets; s++) {
+                const weightKey = `${state.activeId}_${currentDateStr}_${ex.id}_s${s}_weight`;
+                const repsKey = `${state.activeId}_${currentDateStr}_${ex.id}_s${s}_reps`;
+                const savedWeight = localStorage.getItem(weightKey) || '';
+                const savedReps = localStorage.getItem(repsKey) || '';
+
+                html += `
+                    <div class="set-row">
+                        <div class="set-number">${s}</div>
+                        <div class="input-group">
+                            <input type="number" inputmode="decimal" step="0.5" placeholder="0" value="${esc(savedWeight)}" oninput="saveData('${weightKey}', this.value)">
+                            <span>kg</span>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" inputmode="numeric" placeholder="${esc(ex.reps)}" value="${esc(savedReps)}" oninput="saveData('${repsKey}', this.value)">
+                            <span>reps</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+        });
+
+        html += `<button class="dashed-btn" onclick="openAddExercisePicker('${esc(dayType)}')">+ Add Exercise</button>`;
+
+        container.innerHTML = html;
+    }
+
+    function saveData(key, val) {
+        localStorage.setItem(key, val);
+        if (window.scheduleCloudPush) window.scheduleCloudPush();
+    }
+
+    function renderPlatesNav() {
+        const program = getActiveProgram();
+        const nav = document.getElementById('platesNav');
+        const curr = new Date(currentDateStr);
+        let navHtml = '';
+
+        for (let i = -3; i <= 3; i++) {
+            const d = new Date(curr);
+            d.setDate(d.getDate() + i);
+            const dStr = d.toISOString().split('T')[0];
+
+            if (dStr < DATE_MIN || dStr > DATE_MAX) continue;
+
+            const dayType = getDayTypeForDate(program, dStr);
+            const dayNames = ['Su', 'M', 'T', 'W', 'T', 'F', 'S'];
+            const dayLetter = dayNames[d.getDay()];
+            const dayNum = d.getDate();
+
+            const color = colorForDayType(dayType);
+            const activeClass = (dStr === currentDateStr) ? "active" : "";
+
+            navHtml += `
+                <div class="plate ${color.cls} ${activeClass}" style="${color.style}" onclick="selectDate('${dStr}')" title="${dStr}: ${esc(dayType)}">
+                    <span>${dayNum}</span>
+                    <span class="plate-label">${dayLetter}</span>
+                </div>
+            `;
+        }
+        nav.innerHTML = navHtml;
+    }
+
+    /* ============================= MODAL SYSTEM ============================= */
+    function openModal(html) {
+        document.getElementById('modalBox').innerHTML = html;
+        document.getElementById('modalOverlay').classList.add('visible');
+    }
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('visible');
+        document.getElementById('modalBox').innerHTML = '';
+        swapContext = null;
+        scheduleEditContext = null;
+    }
+
+    /* ============================= PROGRAM MANAGER ============================= */
+    function openProgramManager() {
+        const ids = Object.keys(state.programs);
+        let rows = ids.map(id => {
+            const p = state.programs[id];
+            const isActive = id === state.activeId;
+            return `
+                <div class="list-row ${isActive ? 'active-row' : ''}" onclick="switchProgram('${id}')">
+                    <div class="list-row-main">
+                        <div class="list-row-name">${esc(p.name)}${isActive ? ' • Active' : ''}</div>
+                        <div class="list-row-sub">${p.cycleTemplate.length}-day cycle · ${Object.keys(p.dayTypes).length} day types</div>
+                    </div>
+                    <div class="list-row-actions">
+                        <button class="icon-btn" title="Edit" onclick="event.stopPropagation(); openProgramEditor('${id}')">✏️</button>
+                        <button class="icon-btn" title="Duplicate" onclick="event.stopPropagation(); duplicateProgram('${id}')">⧉</button>
+                        ${ids.length > 1 ? `<button class="icon-btn danger" title="Delete" onclick="event.stopPropagation(); deleteProgram('${id}')">✕</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">Your Programs</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            ${rows}
+            <button class="full-btn" onclick="createNewProgram()">+ New Program</button>
+        `);
+    }
+
+    function switchProgram(id) {
+        if (!state.programs[id]) return;
+        state.activeId = id;
+        persist();
+        closeModal();
+        render();
+    }
+
+    function createNewProgram() {
+        const name = prompt("Name your new program:", "Program " + (Object.keys(state.programs).length + 1));
+        if (!name || !name.trim()) return;
+        const source = state.programs[state.activeId];
+        const startBlank = confirm("Tap OK to duplicate \"" + source.name + "\" as a starting point, or Cancel to start completely blank (7-day, all rest).");
+        let newProgram;
+        if (startBlank) {
+            newProgram = deepCopyProgramAsNew(source, name.trim());
+        } else {
+            newProgram = {
+                id: 'p_' + Date.now(),
+                name: name.trim(),
+                nextEntryId: 1,
+                cycleTemplate: ["Rest Day","Rest Day","Rest Day","Rest Day","Rest Day","Rest Day","Rest Day"],
+                dayTypes: {}
+            };
+        }
+        state.programs[newProgram.id] = newProgram;
+        state.activeId = newProgram.id;
+        persist();
+        openProgramManager();
+        render();
+    }
+
+    function deepCopyProgramAsNew(source, name) {
+        const copy = JSON.parse(JSON.stringify(source));
+        copy.id = 'p_' + Date.now();
+        copy.name = name;
+        return copy;
+    }
+
+    function duplicateProgram(id) {
+        const source = state.programs[id];
+        if (!source) return;
+        const name = prompt("Name for the duplicate:", source.name + " Copy");
+        if (!name || !name.trim()) return;
+        const copy = deepCopyProgramAsNew(source, name.trim());
+        state.programs[copy.id] = copy;
+        persist();
+        openProgramManager();
+    }
+
+    function deleteProgram(id) {
+        const ids = Object.keys(state.programs);
+        if (ids.length <= 1) return;
+        const p = state.programs[id];
+        if (!confirm(`Delete "${p.name}"? This can't be undone.`)) return;
+        delete state.programs[id];
+        if (state.activeId === id) {
+            state.activeId = Object.keys(state.programs)[0];
+        }
+        persist();
+        openProgramManager();
+        render();
+    }
+
+    /* ============================= PROGRAM EDITOR (rename + schedule) ============================= */
+    function openProgramEditor(id) {
+        const program = state.programs[id];
+        if (!program) return;
+        const todayIdx = getCycleIndexForDate(program, currentDateStr);
+
+        const typeOptions = allDayTypeNames(program);
+
+        const scheduleRows = program.cycleTemplate.map((dt, idx) => `
+            <div class="schedule-row ${idx === todayIdx ? 'is-today' : ''}">
+                <div class="schedule-row-num">Day ${idx + 1}</div>
+                <select class="select-field" onchange="updateScheduleSlot('${id}', ${idx}, this.value)">
+                    ${typeOptions.map(t => `<option value="${esc(t)}" ${t === dt ? 'selected' : ''}>${esc(t)}</option>`).join('')}
+                </select>
+            </div>
+        `).join('');
+
+        const dayTypeRows = Object.keys(program.dayTypes).map(dtName => `
+            <div class="list-row">
+                <div class="list-row-main">
+                    <div class="list-row-name">${esc(dtName)}</div>
+                    <div class="list-row-sub">${program.dayTypes[dtName].length} exercise${program.dayTypes[dtName].length === 1 ? '' : 's'}</div>
+                </div>
+                <div class="list-row-actions">
+                    <button class="icon-btn danger" title="Delete day type" onclick="deleteDayType('${id}', '${esc(dtName)}')">✕</button>
+                </div>
+            </div>
+        `).join('');
+
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">Edit Program</div>
+                <button class="modal-close-btn" onclick="openProgramManager()">✕</button>
+            </div>
+
+            <div class="field-label">Program Name</div>
+            <input class="text-field" id="programNameField" value="${esc(program.name)}" onchange="renameProgram('${id}', this.value)">
+
+            <div class="field-label">Schedule (repeats every ${program.cycleTemplate.length} days)</div>
+            <div class="modal-subtitle">Day ${todayIdx + 1} is highlighted — that's the slot for today/the date you're viewing.</div>
+            ${scheduleRows}
+            <div style="display:flex; gap:8px; margin: 10px 0 6px;">
+                <button class="icon-btn" style="width:auto; padding:0 12px;" onclick="addCycleDay('${id}')">+ Add day to cycle</button>
+                <button class="icon-btn" style="width:auto; padding:0 12px;" onclick="removeCycleDay('${id}')">− Remove last day</button>
+            </div>
+            <button class="full-btn" style="background: var(--input-bg); border: 1px solid var(--input-border); margin-bottom: 20px;" onclick="openNewDayTypeModal('${id}', null)">+ New day type</button>
+
+            <div class="field-label">Day Types</div>
+            ${dayTypeRows || '<div class="empty-hint">No day types yet.</div>'}
+        `);
+    }
+
+    function renameProgram(id, newName) {
+        if (!newName || !newName.trim()) return;
+        state.programs[id].name = newName.trim();
+        persist();
+        render();
+    }
+
+    function updateScheduleSlot(id, idx, newType) {
+        state.programs[id].cycleTemplate[idx] = newType;
+        persist();
+        render();
+    }
+
+    function addCycleDay(id) {
+        const program = state.programs[id];
+        program.cycleTemplate.push("Rest Day");
+        persist();
+        openProgramEditor(id);
+    }
+
+    function removeCycleDay(id) {
+        const program = state.programs[id];
+        if (program.cycleTemplate.length <= 1) return;
+        program.cycleTemplate.pop();
+        persist();
+        openProgramEditor(id);
+    }
+
+    let selectedDayTemplate = null;
+
+    function openNewDayTypeModal(programId, applyToSlotIndex) {
+        selectedDayTemplate = null;
+        const slotArg = (applyToSlotIndex === null || applyToSlotIndex === undefined) ? 'null' : applyToSlotIndex;
+
+        const templateRows = Object.keys(DAY_TYPE_TEMPLATES).map(name => `
+            <div class="list-row" data-template="${esc(name)}" onclick="selectDayTemplate(this)">
+                <div class="list-row-main">
+                    <div class="list-row-name">${esc(name)}</div>
+                    <div class="list-row-sub">${DAY_TYPE_TEMPLATES[name].length} exercises pre-filled</div>
+                </div>
+            </div>
+        `).join('');
+
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">Add Day Type</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <div class="field-label">Name</div>
+            <input class="text-field" id="newDayTypeName" placeholder="e.g. Chest Day" style="margin-bottom:14px;">
+            <div class="field-label">Start from a template (optional)</div>
+            <div class="list-row" data-template="" onclick="selectDayTemplate(this)">
+                <div class="list-row-main"><div class="list-row-name">Blank — I'll add exercises myself</div></div>
+            </div>
+            ${templateRows}
+            <button class="full-btn" onclick="confirmNewDayType('${programId}', ${slotArg})">Create</button>
+        `);
+    }
+
+    function selectDayTemplate(el) {
+        document.querySelectorAll('#modalBox .list-row[data-template]').forEach(r => r.classList.remove('active-row'));
+        el.classList.add('active-row');
+        selectedDayTemplate = el.dataset.template || null;
+        const nameField = document.getElementById('newDayTypeName');
+        if (selectedDayTemplate && !nameField.value.trim()) {
+            nameField.value = selectedDayTemplate;
+        }
+    }
+
+    function confirmNewDayType(id, applyToSlotIndex) {
+        const program = state.programs[id];
+        const nameField = document.getElementById('newDayTypeName');
+        const name = (nameField.value || selectedDayTemplate || '').trim();
+        if (!name) { alert("Enter a name for this day type."); return; }
+        if (name === "Rest Day") { alert('"Rest Day" already exists.'); return; }
+        if (program.dayTypes[name]) { alert("That day type already exists."); return; }
+
+        program.dayTypes[name] = selectedDayTemplate ? buildExercisesFromNames(program, DAY_TYPE_TEMPLATES[selectedDayTemplate]) : [];
+
+        if (applyToSlotIndex !== null && applyToSlotIndex !== undefined) {
+            program.cycleTemplate[applyToSlotIndex] = name;
+        }
+        persist();
+        if (applyToSlotIndex !== null && applyToSlotIndex !== undefined) {
+            closeModal();
+            render();
+        } else {
+            openProgramEditor(id);
+        }
+    }
+
+    function deleteDayType(id, dtName) {
+        const program = state.programs[id];
+        if (!confirm(`Delete day type "${dtName}"? Any scheduled days using it will become Rest Day.`)) return;
+        delete program.dayTypes[dtName];
+        program.cycleTemplate = program.cycleTemplate.map(t => t === dtName ? "Rest Day" : t);
+        persist();
+        openProgramEditor(id);
+        render();
+    }
+
+    /* ============================= QUICK DAY PICKER (edit pencil on main view) ============================= */
+    function openQuickDayPicker() {
+        const program = getActiveProgram();
+        const idx = getCycleIndexForDate(program, currentDateStr);
+        const options = allDayTypeNames(program);
+
+        const buttons = options.map(t => `
+            <div class="list-row" onclick="applyQuickDayChoice(${idx}, '${esc(t)}')">
+                <div class="list-row-main"><div class="list-row-name">${esc(t)}</div></div>
+            </div>
+        `).join('');
+
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">Change This Day</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-subtitle">This updates day ${idx + 1} of your ${program.cycleTemplate.length}-day cycle — it'll apply everywhere that slot repeats, not just today.</div>
+            ${buttons}
+            <button class="full-btn" style="background: var(--input-bg); border: 1px solid var(--input-border);" onclick="openNewDayTypeModal('${state.activeId}', ${idx})">+ New day type</button>
+        `);
+    }
+
+    function applyQuickDayChoice(idx, newType) {
+        const program = getActiveProgram();
+        program.cycleTemplate[idx] = newType;
+        persist();
+        closeModal();
+        render();
+    }
+
+    /* ============================= EXERCISE SWAP / ADD PICKER ============================= */
+    function buildPickerBody(seedMuscleGroups, onSelectFnName) {
+        const defaultChip = (seedMuscleGroups && seedMuscleGroups[0]) || "All";
+        const chips = ["All", ...MUSCLE_GROUPS].map(m => `
+            <div class="chip ${m === defaultChip ? 'selected' : ''}" data-muscle="${esc(m)}" onclick="filterPicker(this, '${onSelectFnName}')">${esc(m)}</div>
+        `).join('');
+
+        return `
+            <div class="chip-row" id="pickerChipRow">${chips}</div>
+            <div id="pickerList"></div>
+            <div class="field-label">Can't find it? Add a custom exercise</div>
+            <input class="text-field" id="customExName" placeholder="Exercise name" style="margin-bottom:8px;">
+            <div class="field-row" style="margin-bottom:8px;">
+                <div><input class="text-field" id="customExMuscle" placeholder="Muscle group (e.g. Chest)"></div>
+                <div><input class="text-field" id="customExSets" type="number" inputmode="numeric" placeholder="Sets" value="3"></div>
+            </div>
+            <input class="text-field" id="customExReps" placeholder="Reps (e.g. 10 to 12)" style="margin-bottom:10px;">
+            <button class="full-btn" onclick="${onSelectFnName}(null, true)">Add Custom Exercise</button>
+        `;
+    }
+
+    function renderPickerList(muscle, onSelectFnName) {
+        const list = document.getElementById('pickerList');
+        const items = muscle === "All" ? LIBRARY : LIBRARY.filter(l => l.muscleGroups.includes(muscle));
+        list.innerHTML = items.map((item, i) => `
+            <div class="list-row" onclick="${onSelectFnName}(${i}, false)">
+                <div class="list-row-main">
+                    <div class="list-row-name">${esc(item.name)}</div>
+                    <div class="list-row-sub">${esc(item.muscleGroups.join(' · '))} · ${item.sets} × ${esc(item.reps)}</div>
+                </div>
+            </div>
+        `).join('') || '<div class="empty-hint">No matches in this muscle group yet — try Custom below.</div>';
+        list.dataset.muscle = muscle;
+        list.dataset.items = JSON.stringify(items);
+    }
+
+    function filterPicker(chipEl, onSelectFnName) {
+        document.querySelectorAll('#pickerChipRow .chip').forEach(c => c.classList.remove('selected'));
+        chipEl.classList.add('selected');
+        renderPickerList(chipEl.dataset.muscle, onSelectFnName);
+    }
+
+    function openSwapPicker(dayType, exerciseId) {
+        swapContext = { dayType, exerciseId };
+        const program = getActiveProgram();
+        const ex = (program.dayTypes[dayType] || []).find(e => e.id === exerciseId);
+        if (!ex) return;
+
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">Swap "${esc(ex.name)}"</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            ${buildPickerBody(ex.muscleGroups, 'handleSwapSelect')}
+        `);
+        renderPickerList((ex.muscleGroups && ex.muscleGroups[0]) || "All", 'handleSwapSelect');
+    }
+
+    function handleSwapSelect(idx, isCustom) {
+        if (!swapContext) return;
+        const program = getActiveProgram();
+        const list = program.dayTypes[swapContext.dayType];
+        const slot = list.find(e => e.id === swapContext.exerciseId);
+        if (!slot) return;
+
+        let chosen;
+        if (isCustom) {
+            const name = document.getElementById('customExName').value.trim();
+            if (!name) { alert("Enter an exercise name."); return; }
+            const muscleRaw = document.getElementById('customExMuscle').value.trim();
+            const sets = parseInt(document.getElementById('customExSets').value) || 3;
+            const reps = document.getElementById('customExReps').value.trim() || "10 to 12";
+            chosen = { name, muscleGroups: muscleRaw ? muscleRaw.split(',').map(s => s.trim()).filter(Boolean) : [], sets, reps };
+        } else {
+            const listEl = document.getElementById('pickerList');
+            const items = JSON.parse(listEl.dataset.items || '[]');
+            chosen = items[idx];
+            if (!chosen) return;
+        }
+
+        slot.name = chosen.name;
+        slot.muscleGroups = chosen.muscleGroups;
+        slot.sets = chosen.sets;
+        slot.reps = chosen.reps;
+        persist();
+        closeModal();
+        render();
+    }
+
+    function openAddExercisePicker(dayType) {
+        swapContext = { dayType, exerciseId: null };
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">Add Exercise</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            ${buildPickerBody(null, 'handleAddSelect')}
+        `);
+        renderPickerList("All", 'handleAddSelect');
+    }
+
+    function handleAddSelect(idx, isCustom) {
+        if (!swapContext) return;
+        const program = getActiveProgram();
+        if (!program.dayTypes[swapContext.dayType]) program.dayTypes[swapContext.dayType] = [];
+
+        let chosen;
+        if (isCustom) {
+            const name = document.getElementById('customExName').value.trim();
+            if (!name) { alert("Enter an exercise name."); return; }
+            const muscleRaw = document.getElementById('customExMuscle').value.trim();
+            const sets = parseInt(document.getElementById('customExSets').value) || 3;
+            const reps = document.getElementById('customExReps').value.trim() || "10 to 12";
+            chosen = { name, muscleGroups: muscleRaw ? muscleRaw.split(',').map(s => s.trim()).filter(Boolean) : [], sets, reps };
+        } else {
+            const listEl = document.getElementById('pickerList');
+            const items = JSON.parse(listEl.dataset.items || '[]');
+            chosen = items[idx];
+            if (!chosen) return;
+        }
+
+        const newId = program.nextEntryId++;
+        program.dayTypes[swapContext.dayType].push({
+            id: newId, name: chosen.name, muscleGroups: chosen.muscleGroups, sets: chosen.sets, reps: chosen.reps
+        });
+        persist();
+        closeModal();
+        render();
+    }
+
+    function removeExercise(dayType, exerciseId) {
+        const program = getActiveProgram();
+        const list = program.dayTypes[dayType];
+        if (!list) return;
+        const ex = list.find(e => e.id === exerciseId);
+        if (!ex) return;
+        if (!confirm(`Remove "${ex.name}" from ${dayType}?`)) return;
+        program.dayTypes[dayType] = list.filter(e => e.id !== exerciseId);
+        persist();
+        render();
+    }
+
+    /* ============================= EDIT TARGET (sets/reps) ============================= */
+    function openEditTarget(dayType, exerciseId) {
+        const program = getActiveProgram();
+        const ex = (program.dayTypes[dayType] || []).find(e => e.id === exerciseId);
+        if (!ex) return;
+
+        openModal(`
+            <div class="modal-title-row">
+                <div class="modal-title">${esc(ex.name)}</div>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <div class="field-row">
+                <div>
+                    <div class="field-label">Sets</div>
+                    <input class="text-field" id="targetSets" type="number" inputmode="numeric" value="${ex.sets}">
+                </div>
+                <div>
+                    <div class="field-label">Reps</div>
+                    <input class="text-field" id="targetReps" value="${esc(ex.reps)}">
+                </div>
+            </div>
+            <button class="full-btn" onclick="saveEditTarget('${esc(dayType)}', ${exerciseId})">Save</button>
+        `);
+    }
+
+    function saveEditTarget(dayType, exerciseId) {
+        const program = getActiveProgram();
+        const ex = (program.dayTypes[dayType] || []).find(e => e.id === exerciseId);
+        if (!ex) return;
+        const sets = parseInt(document.getElementById('targetSets').value) || ex.sets;
+        const reps = document.getElementById('targetReps').value.trim() || ex.reps;
+        ex.sets = sets;
+        ex.reps = reps;
+        persist();
+        closeModal();
+        render();
+    }
+
+    window.onload = function () {
+        init();
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    };
+</script>
+
+<script type="module">
+    // ============================= CLOUD SYNC (Firebase) =============================
+    // Replace the placeholder values below with your own Firebase project config
+    // (Firebase Console → Project Settings → Your apps → Web app → Config).
+    // These values are meant to be public/client-side — Firebase security comes from
+    // Firestore Security Rules, not from hiding this object.
+    const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyDopUeO0u7Q1CPOeqAX6V-u6LZNCOkAorA",
+        authDomain: "training-log-59d5d.firebaseapp.com",
+        projectId: "training-log-59d5d",
+        storageBucket: "training-log-59d5d.firebasestorage.app",
+        messagingSenderId: "572462330543",
+        appId: "1:572462330543:web:a4f5f3678866d916041a5a"
+    };
+    // ===================================================================================
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import {
+        getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+        signInWithEmailAndPassword, signOut
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+    import {
+        getFirestore, doc, getDoc, setDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    let cloudEnabled = false;
+    let app, auth, db;
+    let currentUser = null;
+    let pushTimer = null;
+
+    function esc(str) {
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function updateCloudIcon() {
+        const btn = document.getElementById('cloudIcon');
+        if (!btn) return;
+        if (!cloudEnabled) { btn.textContent = '☁️'; btn.title = 'Cloud sync not set up yet'; return; }
+        btn.textContent = currentUser ? '🔵' : '☁️';
+        btn.title = currentUser ? ('Signed in as ' + currentUser.email + ' — tap for sync options') : 'Tap to sign in for cloud sync';
+    }
+
+    window.openCloudModal = function () {
+        if (!cloudEnabled) {
+            window.openModal(`
+                <div class="modal-title-row"><div class="modal-title">Cloud Sync</div><button class="modal-close-btn" onclick="closeModal()">✕</button></div>
+                <div class="empty-hint">Cloud sync isn't configured yet on this copy of the app. Ask Claude to walk you through Firebase setup, then add your project config to the file.</div>
+            `);
+            return;
+        }
+        if (currentUser) {
+            window.openModal(`
+                <div class="modal-title-row"><div class="modal-title">Cloud Sync</div><button class="modal-close-btn" onclick="closeModal()">✕</button></div>
+                <div class="modal-subtitle">Signed in as ${esc(currentUser.email)}</div>
+                <button class="full-btn" style="background:var(--input-bg); border:1px solid var(--input-border);" onclick="manualPushToCloud()">Sync Now</button>
+                <button class="full-btn" style="background:var(--accent-red); margin-top:8px;" onclick="signOutCloud()">Sign Out</button>
+            `);
+        } else {
+            window.openModal(`
+                <div class="modal-title-row"><div class="modal-title">Cloud Sync</div><button class="modal-close-btn" onclick="closeModal()">✕</button></div>
+                <div class="modal-subtitle">Sign in to back up your programs and logs, and sync them across devices.</div>
+                <div class="field-label">Email</div>
+                <input class="text-field" id="authEmail" type="email" placeholder="you@example.com" autocapitalize="off" autocomplete="email">
+                <div class="field-label">Password</div>
+                <input class="text-field" id="authPassword" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+                <button class="full-btn" onclick="signInCloud()">Sign In</button>
+                <button class="full-btn" style="background:var(--input-bg); border:1px solid var(--input-border); margin-top:8px;" onclick="signUpCloud()">Create Account</button>
+            `);
+        }
+    };
+
+    window.signUpCloud = function () {
+        const email = document.getElementById('authEmail').value.trim();
+        const pw = document.getElementById('authPassword').value;
+        if (!email || pw.length < 6) { alert("Enter a valid email and a password of at least 6 characters."); return; }
+        createUserWithEmailAndPassword(auth, email, pw)
+            .then(() => window.closeModal())
+            .catch(err => alert(err.message));
+    };
+
+    window.signInCloud = function () {
+        const email = document.getElementById('authEmail').value.trim();
+        const pw = document.getElementById('authPassword').value;
+        if (!email || !pw) { alert("Enter your email and password."); return; }
+        signInWithEmailAndPassword(auth, email, pw)
+            .then(() => window.closeModal())
+            .catch(err => alert(err.message));
+    };
+
+    window.signOutCloud = function () {
+        signOut(auth).then(() => window.closeModal());
+    };
+
+    window.manualPushToCloud = function () {
+        pushNow();
+        window.closeModal();
+    };
+
+    window.scheduleCloudPush = function () {
+        if (!cloudEnabled || !currentUser) return;
+        clearTimeout(pushTimer);
+        pushTimer = setTimeout(pushNow, 2000);
+    };
+
+    function pushNow() {
+        if (!cloudEnabled || !currentUser || typeof window.getCloudPayload !== 'function') return;
+        const payload = window.getCloudPayload();
+        setDoc(doc(db, 'users', currentUser.uid), {
+            programs: payload.programs,
+            activeId: payload.activeId,
+            logs: payload.logs,
+            profile: payload.profile || null,
+            updatedAt: serverTimestamp()
+        }).catch(err => console.error("Cloud push failed", err));
+    }
+
+    function handleSignedIn(user) {
+        const ref = doc(db, 'users', user.uid);
+        getDoc(ref).then(snap => {
+            if (snap.exists()) {
+                const cloud = snap.data();
+                const hasCloudData = cloud.programs && Object.keys(cloud.programs).length > 0;
+                if (hasCloudData) {
+                    if (confirm("A cloud backup was found for this account. Load it? This replaces the programs and logs on this device.")) {
+                        window.applyCloudSnapshot(cloud.programs, cloud.activeId, cloud.logs || {}, cloud.profile || null);
+                        return;
+                    }
+                }
+            }
+            pushNow();
+        }).catch(err => console.error(err));
+    }
+
+    if (FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY") {
+        try {
+            app = initializeApp(FIREBASE_CONFIG);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            cloudEnabled = true;
+            onAuthStateChanged(auth, user => {
+                currentUser = user;
+                updateCloudIcon();
+                if (user) handleSignedIn(user);
+            });
+        } catch (e) {
+            console.error("Firebase init failed", e);
+            cloudEnabled = false;
+        }
+    }
+    updateCloudIcon();
+</script>
+
+</body>
+</html>
